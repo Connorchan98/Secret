@@ -3,8 +3,8 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const ejs = require("ejs");
 const mongoose = require("mongoose");
-const encrypt = require("mongoose-encryption");
 var validate = require('mongoose-validator');
+const md5 = require('md5');
 
 const app = express();
 
@@ -37,17 +37,11 @@ const userSchema = new mongoose.Schema({
         validate: [validateEmail, 'Please fill a valid email address'],
         match: [/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/, 'Please fill a valid email address']
     },
-  password:{
-    type: String,
-    trim: true,
-    uppercase: true,
-    required: true,
-    maxlength: 8
-  }
+  password: String,
+
 });
 
 
-userSchema.plugin(encrypt, {secret: process.env.SECRET, encryptedFields: ["password"]});
 
 const User = new mongoose.model("User", userSchema);
 
@@ -65,7 +59,7 @@ app.route("/login")
 })
 .post(function(req, res){
   const userEmail = req.body.username;
-  const password = req.body.password;
+  const password = md5(req.body.password);
   User.findOne({email: userEmail}, function(err, foundUser){
     if(err){
       console.log(err);
@@ -87,11 +81,9 @@ app.route("/register")
 })
 .post(function(req, res){
 
-console.log(req.body.username);
-
     const newUser = new User({
       email: req.body.username,
-      password: req.body.password
+      password: md5(req.body.password)
     });
 
 console.log(newUser);
